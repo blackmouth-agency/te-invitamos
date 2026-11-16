@@ -998,12 +998,17 @@ $$('input[name="asistencia"]').forEach(r => r.addEventListener('change', () => {
 function err(m){ errBox.textContent = m; errBox.classList.add('show'); }
 function doneHTML(title, text){
   return '<div class="rsvp-done"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>' +
-    '<h3></h3><p class="lead" style="font-size:15px"></p>' + (title ? '<a class="btn btn--block wa-aviso" rel="noopener">' + $('#waDuda svg').outerHTML + 'Avisarle a María José</a><p class="wa-note">Le llega tu confirmación a su WhatsApp</p>' : '') + '<button class="again" type="button">Cambiar mi respuesta</button></div>';
+    '<h3></h3><p class="lead" style="font-size:15px"></p>' + (title ? '<a class="btn btn--block wa-aviso" rel="noopener">' + $('#waDuda svg').outerHTML + 'Avisarle a María José</a><p class="wa-note">Te llevamos a WhatsApp con el mensaje listo. Solo dale enviar.</p>' : '') + '<button class="again" type="button">Cambiar mi respuesta</button></div>';
 }
 const box = $("#rsvpBox");
 function celebrate(nombre, asiste, guardado, aviso){
   box.innerHTML = doneHTML(aviso);
-  if (aviso) $('.wa-aviso', box).href = 'https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent(aviso);
+  if (aviso) {
+    const waLink = 'https://api.whatsapp.com/send?phone=' + CFG.whatsapp + '&text=' + encodeURIComponent(aviso);
+    $('.wa-aviso', box).href = waLink;
+    // Tercer aviso: abre WhatsApp solo, con el mensaje escrito (como en conoce-mas). El botón queda por si no abre.
+    setTimeout(() => { $('.wa-note', box) && ($('.wa-note', box).textContent = '¿No se abrió WhatsApp? Toca el botón.'); location.href = waLink; }, 2200);
+  }
   $('h3', box).textContent = asiste ? '¡Nos vemos el 13!' : 'Gracias por avisarnos';
   $('.lead', box).textContent = asiste
     ? (guardado ? 'Ya guardamos tu puesto, ' : 'Ya tenemos tu respuesta, ') + nombre + '.'
@@ -1047,7 +1052,7 @@ try {
   }
 } catch (e) {}
 
-$('#waDuda').href = 'https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent('¡Hola, María José! 🦋 Tengo una pregunta sobre tus quince: ');
+$('#waDuda').href = 'https://api.whatsapp.com/send?phone=' + CFG.whatsapp + '&text=' + encodeURIComponent('¡Hola, María José! 🦋 Tengo una pregunta sobre tus quince: ');
 
 /* ============================================================
    MÚSICA: «Perfect» (YouTube) de fondo; la playlist de Spotify se muestra
