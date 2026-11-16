@@ -332,6 +332,8 @@ textarea.input{resize:vertical;min-height:84px;line-height:1.6}
 .rsvp-done .tick{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;background:var(--emerald);color:var(--gold-l);box-shadow:0 10px 24px rgba(4,89,106,.3)}
 .rsvp-done .tick svg{width:28px;height:28px}
 .rsvp-done h3{font-family:var(--f-display);font-style:italic;font-weight:400;font-size:30px;color:var(--emerald)}
+.rsvp-done .btn{margin-top:6px}
+.rsvp-done .wa-note{font-size:12.5px;color:var(--ink-soft);margin-top:-4px}
 .rsvp-done .again{background:none;border:0;color:var(--ink-soft);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:4px}
 
 /* ============================================================
@@ -655,7 +657,7 @@ footer.foot{margin:60px calc(var(--pad) * -1) 0;padding:64px 24px 140px;text-ali
       <h2 class="display" id="t-cont" style="font-size:28px">¿Alguna duda?</h2>
       <p class="lead" style="font-size:15px">Escríbenos por WhatsApp y te respondemos.</p>
     </div>
-    <a class="btn btn--block reveal d1" href="https://wa.me/qr/WQMF2RHWNPX6A1" rel="noopener">
+    <a class="btn btn--block reveal d1" id="waDuda" href="https://wa.me/573178556551" rel="noopener">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.9-4.45 9.91-9.91a9.85 9.85 0 0 0-2.9-7.01A9.82 9.82 0 0 0 12.04 2zm4.52 11.99c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.44-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.47c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29z"/></svg>
       Escribir por WhatsApp</a>
   </section>
@@ -705,7 +707,8 @@ const CFG = {
   slug: 'xv-maria-jose',   // pestaña en la hoja «Invitaciones 2026» (cuenta de la agencia)
   endpoint: 'https://script.google.com/macros/s/AKfycbyD41xxvS0mhfsT5ttElXSTm0YBrGKfP6iwBSVjwpvr18ezzMU7EOIrOFaHejyyfLXJ/exec',
   playlistId: '20AwI5RX1xvOrXVVekTzSe',   // playlist de la fiesta (se ve, no suena sola)
-  cancionYT: '2Vv-BfVoq4g',               // Ed Sheeran · Perfect: suena de fondo al abrir
+  cancionYT: '2Vv-BfVoq4g',
+  whatsapp: '573178556551',               // WhatsApp de María José (+57 317 8556551): dudas y avisos de confirmación               // Ed Sheeran · Perfect: suena de fondo al abrir
   albumUrl: '',
   cupos: 2,
   fecha: '2026-12-13T20:00:00-05:00',
@@ -995,14 +998,15 @@ $$('input[name="asistencia"]').forEach(r => r.addEventListener('change', () => {
 function err(m){ errBox.textContent = m; errBox.classList.add('show'); }
 function doneHTML(title, text){
   return '<div class="rsvp-done"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>' +
-    '<h3></h3><p class="lead" style="font-size:15px"></p><button class="again" type="button">Cambiar mi respuesta</button></div>';
+    '<h3></h3><p class="lead" style="font-size:15px"></p>' + (title ? '<a class="btn btn--block wa-aviso" rel="noopener">' + $('#waDuda svg').outerHTML + 'Avisarle a María José</a><p class="wa-note">Le llega tu confirmación a su WhatsApp</p>' : '') + '<button class="again" type="button">Cambiar mi respuesta</button></div>';
 }
 const box = $("#rsvpBox");
-function celebrate(nombre, asiste, guardado){
-  box.innerHTML = doneHTML();
+function celebrate(nombre, asiste, guardado, aviso){
+  box.innerHTML = doneHTML(aviso);
+  if (aviso) $('.wa-aviso', box).href = 'https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent(aviso);
   $('h3', box).textContent = asiste ? '¡Nos vemos el 13!' : 'Gracias por avisarnos';
   $('.lead', box).textContent = asiste
-    ? (guardado ? 'Ya guardamos tu puesto, ' : 'Ya tenemos tu respuesta, ') + nombre + '. Cualquier cambio, escríbenos por WhatsApp.'
+    ? (guardado ? 'Ya guardamos tu puesto, ' : 'Ya tenemos tu respuesta, ') + nombre + '.'
     : 'Te vamos a extrañar esa noche, ' + nombre + '. Gracias por contarnos.';
   $('.again', box).addEventListener('click', () => { try { localStorage.removeItem('xv_mj_rsvp'); } catch (e) {} location.reload(); });
   if (asiste) { const r = box.getBoundingClientRect(); burst(r.left + r.width / 2, Math.min(innerHeight * .6, r.top + 60), 18); }
@@ -1025,7 +1029,13 @@ form.addEventListener('submit', async e => {
   catch (x) { ok = false; }
   if (!ok) { btn.disabled = false; btn.textContent = 'Enviar confirmación'; err('No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.'); return; }
   try { localStorage.setItem('xv_mj_rsvp', JSON.stringify({ nombre, asiste })); } catch (x) {}
-  celebrate(nombre.split(' ')[0], asiste, true);
+  const NL = String.fromCharCode(10);
+  const extra = cancion ? NL + 'Canción que te pido: ' + cancion : '';
+  const msj = $('#mensaje').value.trim();
+  const aviso = asiste
+    ? '¡Hola, María José! 🦋 Soy ' + nombre + ' y confirmo que voy a tus quince: ' + n + (n === 1 ? ' persona.' : ' personas.') + extra + (msj ? NL + msj : '')
+    : '¡Hola, María José! 🦋 Soy ' + nombre + '. No voy a poder ir a tus quince.' + (msj ? NL + msj : '');
+  celebrate(nombre.split(' ')[0], asiste, true, aviso);
 });
 try {
   const prev = JSON.parse(localStorage.getItem('xv_mj_rsvp') || 'null');
@@ -1036,6 +1046,8 @@ try {
     $('.again', box).addEventListener('click', () => { try { localStorage.removeItem('xv_mj_rsvp'); } catch (e) {} location.reload(); });
   }
 } catch (e) {}
+
+$('#waDuda').href = 'https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent('¡Hola, María José! 🦋 Tengo una pregunta sobre tus quince: ');
 
 /* ============================================================
    MÚSICA: «Perfect» (YouTube) de fondo; la playlist de Spotify se muestra
