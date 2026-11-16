@@ -306,15 +306,6 @@ canvas.flies{position:fixed;inset:0;z-index:65;pointer-events:none}
 .input:focus{outline:0;border-color:var(--emerald);background:#fff;box-shadow:0 0 0 3px rgba(4,89,106,.14)}
 .input[readonly]{background:var(--mist);color:var(--ink)}
 textarea.input{resize:vertical;min-height:84px;line-height:1.6}
-.stepper{display:flex;align-items:center;justify-content:space-between;background:#F6FAF9;border:1px solid var(--line);border-radius:13px;padding:8px 10px;transition:opacity .3s ease}
-.step-btn{width:44px;height:44px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--emerald);cursor:pointer;font-size:20px;line-height:1;display:grid;place-items:center;transition:background .2s ease,color .2s ease,opacity .2s ease}
-.step-btn:hover:not(:disabled){background:var(--emerald);color:#fff}
-.step-btn:disabled{opacity:.3;cursor:not-allowed}
-.step-btn:focus-visible{outline:3px solid var(--emerald);outline-offset:2px}
-.step-val{display:flex;flex-direction:column;align-items:center;line-height:1.15}
-.step-val b{font-family:var(--f-display);font-size:28px;font-weight:400;color:var(--ink);font-variant-numeric:tabular-nums}
-.step-val span{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft)}
-.step-hint{font-size:12.5px;color:var(--ink-soft)}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .choice{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--line);border-radius:16px;padding:16px 10px;background:#F6FAF9;text-align:center;position:relative;transition:border-color .25s ease,background .25s ease,transform .2s var(--ease)}
 .choice:hover{transform:translateY(-2px)}
@@ -334,6 +325,7 @@ textarea.input{resize:vertical;min-height:84px;line-height:1.6}
 .rsvp-done h3{font-family:var(--f-display);font-style:italic;font-weight:400;font-size:30px;color:var(--emerald)}
 .rsvp-done .btn{margin-top:6px}
 .rsvp-done .wa-note{font-size:12.5px;color:var(--ink-soft);margin-top:-4px}
+.rsvp-done .again-row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 .rsvp-done .again{background:none;border:0;color:var(--ink-soft);font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;margin-top:4px}
 
 /* ============================================================
@@ -579,12 +571,12 @@ footer.foot{margin:60px calc(var(--pad) * -1) 0;padding:64px 24px 140px;text-ali
     <div class="sec-head center reveal">
       <p class="eyebrow">Confirmación</p>
       <h2 class="display h-sec" id="t-rsvp">¿Vienes?</h2>
-      <p class="lead">Con esto sabemos cuántos puestos guardar.</p>
+      <p class="lead">Cada invitado confirma por su cuenta: si vienen varios, cada uno llena el suyo.</p>
     </div>
     <div class="rsvp reveal d1" id="rsvpBox">
       <form id="rsvpForm" novalidate>
         <div class="field">
-          <label for="nombre">Quién confirma</label>
+          <label for="nombre">Tu nombre</label>
           <input class="input" type="text" id="nombre" name="nombre" placeholder="Nombre y apellido" autocomplete="name">
         </div>
         <div class="field">
@@ -601,15 +593,6 @@ footer.foot{margin:60px calc(var(--pad) * -1) 0;padding:64px 24px 140px;text-ali
               <span class="choice-txt">No voy a poder</span>
             </label>
           </div>
-        </div>
-        <div class="field" id="fieldPersonas">
-          <span class="lbl" id="lbl-pers">Cuántos vienen</span>
-          <div class="stepper" role="group" aria-labelledby="lbl-pers">
-            <button class="step-btn" type="button" id="stepMinus" aria-label="Quitar una persona">−</button>
-            <span class="step-val" aria-live="polite"><b id="stepVal">1</b><span id="stepWord">persona</span></span>
-            <button class="step-btn" type="button" id="stepPlus" aria-label="Agregar una persona">+</button>
-          </div>
-          <p class="step-hint" id="stepHint">Tu invitación tiene 2 cupos.</p>
         </div>
         <div class="field" id="fieldCancion">
           <label for="cancion">La canción que no puede faltar <span class="opt">(opcional)</span></label>
@@ -710,7 +693,6 @@ const CFG = {
   cancionYT: '2Vv-BfVoq4g',
   whatsapp: '573178556551',               // WhatsApp de María José (+57 317 8556551): dudas y avisos de confirmación               // Ed Sheeran · Perfect: suena de fondo al abrir
   albumUrl: '',
-  cupos: 2,
   fecha: '2026-12-13T20:00:00-05:00',
   finEvento: '2026-12-14T02:00:00-05:00',
   lugar: "Eventos Christian's",
@@ -729,17 +711,14 @@ root.classList.add('js');
 const toastEl = $('#toast'); let toastT;
 function toast(msg){ toastEl.textContent = msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2600); }
 
-/* ---------- Personalización por URL: ?invitado=Nombre&cupos=2 (o ?i=&c=) ---------- */
+/* ---------- Personalización por URL: ?invitado=Nombre (o ?i=). Cada persona confirma por sí misma: sin cupos ---------- */
 const params = new URLSearchParams(location.search);
 const rawName = params.get('invitado') || params.get('i') || '';
 const invitado = rawName.replace(/\+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80);
-const cupos = Math.max(1, Math.min(20, parseInt(params.get('cupos') || params.get('c'), 10) || CFG.cupos));
 const nombreInput = $('#nombre');
 if (invitado) {
   $('#saludo').textContent = '¡Hola, ' + invitado + '!';
-  nombreInput.value = invitado;
 }
-$('#stepHint').textContent = cupos === 1 ? 'Tu invitación es para 1 persona.' : 'Tu invitación tiene ' + cupos + ' cupos.';
 
 /* ============================================================
    MARIPOSAS (canvas)
@@ -983,24 +962,19 @@ if (CFG.albumUrl) {
    CONFIRMACIÓN → hoja «Invitaciones 2026», pestaña xv-maria-jose
    ============================================================ */
 const form = $('#rsvpForm');
-const stepVal = $('#stepVal'), stepWord = $('#stepWord'), stepMinus = $('#stepMinus'), stepPlus = $('#stepPlus');
 const errBox = $('#formErr');
-let n = Math.min(cupos, 1);
-function renderStep(){ stepVal.textContent = n; stepWord.textContent = n === 1 ? 'persona' : 'personas'; stepMinus.disabled = n <= 1; stepPlus.disabled = n >= cupos; }
-stepMinus.addEventListener('click', () => { if (n > 1) { n--; renderStep(); } });
-stepPlus.addEventListener('click', () => { if (n < cupos) { n++; renderStep(); } else toast('Tu invitación llega hasta ' + cupos); });
-renderStep();
 $$('input[name="asistencia"]').forEach(r => r.addEventListener('change', () => {
   const va = $('#asis-si').checked;
-  $('#fieldPersonas').hidden = !va; $('#fieldCancion').hidden = !va;
+  $('#fieldCancion').hidden = !va;
   errBox.classList.remove('show');
 }));
 function err(m){ errBox.textContent = m; errBox.classList.add('show'); }
 function doneHTML(title, text){
   return '<div class="rsvp-done"><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>' +
-    '<h3></h3><p class="lead" style="font-size:15px"></p>' + (title ? '<a class="btn btn--block wa-aviso" rel="noopener">' + $('#waDuda svg').outerHTML + 'Avisarle a María José</a><p class="wa-note">Te llevamos a WhatsApp con el mensaje listo. Solo dale enviar.</p>' : '') + '<button class="again" type="button">Cambiar mi respuesta</button></div>';
+    '<h3></h3><p class="lead" style="font-size:15px"></p>' + (title ? '<a class="btn btn--block wa-aviso" rel="noopener">' + $('#waDuda svg').outerHTML + 'Avisarle a María José</a><p class="wa-note">Te llevamos a WhatsApp con el mensaje listo. Solo dale enviar.</p>' : '') + '<div class="again-row"><button class="again" type="button">Confirmar a otra persona</button><button class="again" type="button">Cambiar mi respuesta</button></div></div>';
 }
 const box = $("#rsvpBox");
+function otraVez(){ try { localStorage.removeItem('xv_mj_rsvp'); } catch (e) {} location.hash = 'asistencia'; location.reload(); }
 function celebrate(nombre, asiste, guardado, aviso){
   box.innerHTML = doneHTML(aviso);
   if (aviso) {
@@ -1013,7 +987,7 @@ function celebrate(nombre, asiste, guardado, aviso){
   $('.lead', box).textContent = asiste
     ? (guardado ? 'Ya guardamos tu puesto, ' : 'Ya tenemos tu respuesta, ') + nombre + '.'
     : 'Te vamos a extrañar esa noche, ' + nombre + '. Gracias por contarnos.';
-  $('.again', box).addEventListener('click', () => { try { localStorage.removeItem('xv_mj_rsvp'); } catch (e) {} location.reload(); });
+  $$('.again', box).forEach(b => b.addEventListener('click', otraVez));
   if (asiste) { const r = box.getBoundingClientRect(); burst(r.left + r.width / 2, Math.min(innerHeight * .6, r.top + 60), 18); }
 }
 form.addEventListener('submit', async e => {
@@ -1027,7 +1001,7 @@ form.addEventListener('submit', async e => {
   const cancion = $('#cancion').value.trim();
   const data = new URLSearchParams({
     evento: CFG.slug, nombre, invitado_link: invitado, asistencia: asiste ? 'si' : 'no',
-    personas: asiste ? n : 0, cupos, extra: asiste && cancion ? 'Canción: ' + cancion : '', mensaje: $('#mensaje').value.trim()
+    personas: asiste ? 1 : 0, cupos: '', extra: asiste && cancion ? 'Canción: ' + cancion : '', mensaje: $('#mensaje').value.trim()
   });
   let ok = true;
   try { await fetch(CFG.endpoint, { method: 'POST', mode: 'no-cors', body: data }); }
@@ -1038,7 +1012,7 @@ form.addEventListener('submit', async e => {
   const extra = cancion ? NL + 'Canción que te pido: ' + cancion : '';
   const msj = $('#mensaje').value.trim();
   const aviso = asiste
-    ? '¡Hola, María José! 🦋 Soy ' + nombre + ' y confirmo que voy a tus quince: ' + n + (n === 1 ? ' persona.' : ' personas.') + extra + (msj ? NL + msj : '')
+    ? '¡Hola, María José! 🦋 Soy ' + nombre + ' y confirmo que voy a tus quince.' + extra + (msj ? NL + msj : '')
     : '¡Hola, María José! 🦋 Soy ' + nombre + '. No voy a poder ir a tus quince.' + (msj ? NL + msj : '');
   celebrate(nombre.split(' ')[0], asiste, true, aviso);
 });
@@ -1048,7 +1022,7 @@ try {
     box.innerHTML = doneHTML();
     $('h3', box).textContent = 'Ya confirmaste';
     $('.lead', box).textContent = 'Gracias, ' + prev.nombre.split(' ')[0] + (prev.asiste ? '. Nos vemos el 13 de diciembre.' : '. Ya tenemos tu respuesta.');
-    $('.again', box).addEventListener('click', () => { try { localStorage.removeItem('xv_mj_rsvp'); } catch (e) {} location.reload(); });
+    $$('.again', box).forEach(b => b.addEventListener('click', otraVez));
   }
 } catch (e) {}
 

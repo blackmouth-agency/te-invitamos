@@ -39,13 +39,13 @@ textarea:focus,input:focus{border-color:var(--esm)}
 <body>
 <div class="caja">
   <h1>Lista de invitados</h1>
-  <p class="intro">Escribe un invitado por línea, con coma y la cantidad de lugares.<br>Cada uno recibe su propio link con su nombre y sus cupos.</p>
+  <p class="intro">Escribe un invitado por línea.<br>Cada uno recibe su propio link con su nombre y confirma por su cuenta.</p>
 
   <div class="tarjeta fila">
     <div>
       <label for="lista">Invitados</label>
-      <textarea id="lista" placeholder="Familia Gómez, 4&#10;Tía Marcela, 2&#10;Juan Pablo, 1"></textarea>
-      <p class="ayuda">Sin número, queda en 2 lugares. Los links se guardan en este navegador.</p>
+      <textarea id="lista" placeholder="Tía Marcela&#10;Juan Pablo&#10;Familia Gómez"></textarea>
+      <p class="ayuda">Si le mandas un link a una familia, cada persona confirma por separado desde el mismo link. Los links se guardan en este navegador.</p>
     </div>
     <div>
       <label for="base">Link de la invitación</label>
@@ -61,7 +61,7 @@ textarea:focus,input:focus{border-color:var(--esm)}
   <div class="tarjeta" id="res" hidden>
     <div class="lista" id="items"></div>
     <p class="total" id="total"></p>
-    <p class="hoja">Las respuestas llegan a la hoja «Invitaciones 2026», pestaña <b>xv-maria-jose</b>, y quien confirma también puede avisar por WhatsApp.</p>
+    <p class="hoja">Cada confirmación llega a la hoja «Confirmaciones · XV María José», al correo de María José y, si el invitado lo envía, a su WhatsApp.</p>
   </div>
 </div>
 <script>
@@ -71,25 +71,24 @@ $('#base').value = base0;
 try { $('#lista').value = localStorage.getItem('xv-mj-lista') || ''; } catch(e){}
 function filas(){
   return $('#lista').value.split('\n').map(l => l.trim()).filter(Boolean).map(l => {
-    const m = l.match(/^(.*?)[,;\t]\s*(\d{1,2})\s*$/);
-    return m ? { n: m[1].trim(), c: +m[2] } : { n: l, c: 2 };
+    return { n: l.replace(/[,;\t]\s*\d{1,2}\s*$/, '').trim() };
   });
 }
-function link(f){ const b = $('#base').value.trim(); return b + (b.includes('?') ? '&' : '?') + 'invitado=' + encodeURIComponent(f.n) + '&cupos=' + f.c; }
-function mensaje(f){ return `¡Hola, ${f.n}! 🦋 Quiero que me acompañes en mis quince años. Abre tu invitación aquí: ${link(f)}`; }
+function link(f){ const b = $('#base').value.trim(); return b + (b.includes('?') ? '&' : '?') + 'invitado=' + encodeURIComponent(f.n); }
+function mensaje(f){ return `¡Hola, ${f.n}! 🦋 Quiero que me acompañes en mis quince años. Abre tu invitación y confírmame aquí: ${link(f)}`; }
 function generar(){
   try { localStorage.setItem('xv-mj-lista', $('#lista').value); } catch(e){}
   const fs = filas(); const box = $('#items'); box.innerHTML = '';
   fs.forEach(f => {
     const d = document.createElement('div'); d.className = 'inv';
-    d.innerHTML = `<div><b></b> <span class="c"></span></div><code></code><div class="acc"><button class="btn claro">Copiar link</button><a class="btn verde" rel="noopener">Enviar por WhatsApp</a><a class="btn lila" rel="noopener">Ver</a></div>`;
-    d.querySelector('b').textContent = f.n; d.querySelector('.c').textContent = `· ${f.c} ${f.c === 1 ? 'lugar' : 'lugares'}`;
+    d.innerHTML = `<div><b></b></div><code></code><div class="acc"><button class="btn claro">Copiar link</button><a class="btn verde" rel="noopener">Enviar por WhatsApp</a><a class="btn lila" rel="noopener">Ver</a></div>`;
+    d.querySelector('b').textContent = f.n;
     d.querySelector('code').textContent = link(f);
     d.querySelector('button').onclick = e => { navigator.clipboard.writeText(link(f)); e.target.textContent = '¡Copiado!'; setTimeout(() => e.target.textContent = 'Copiar link', 1500); };
-    const a = d.querySelectorAll('a'); a[0].href = 'https://wa.me/?text=' + encodeURIComponent(mensaje(f)); a[1].href = link(f);
+    const a = d.querySelectorAll('a'); a[0].href = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(mensaje(f)); a[1].href = link(f);
     box.appendChild(d);
   });
-  const lug = fs.reduce((s,f) => s + f.c, 0); $('#total').textContent = `${fs.length} ${fs.length === 1 ? 'invitación' : 'invitaciones'} · ${lug} ${lug === 1 ? 'lugar' : 'lugares'} en total`;
+  $('#total').textContent = `${fs.length} ${fs.length === 1 ? 'invitación' : 'invitaciones'}`;
   $('#res').hidden = !fs.length;
 }
 $('#generar').onclick = generar;
