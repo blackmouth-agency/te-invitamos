@@ -795,7 +795,7 @@ form.addEventListener('submit', async e => {
     catch (x) { btn.disabled = false; btn.textContent = CFG.textos.boton; err(CFG.textos.errRed); return; }
   } else await new Promise(r => setTimeout(r, 700));
   try { localStorage.setItem(KEY, JSON.stringify({ nombre, asiste })); } catch (x) {}
-  const first = nombre.split(' ')[0];
+  const first = nombre.length <= 24 ? nombre : nombre.split(' ')[0];
   let extraHTML = '';
   if (CFG.demo) {
     extraHTML = '<div class="host"><p class="host-k">' + CFG.textos.asiLlega + '</p><div class="host-n"><span class="av">' + ICO_WA + '</span><span><b></b><small></small></span></div><div class="host-row"><span></span><span></span><span class="ok"></span></div></div>';
@@ -816,7 +816,7 @@ form.addEventListener('submit', async e => {
 });
 try {
   const prev = JSON.parse(localStorage.getItem(KEY) || 'null');
-  if (prev && prev.nombre && !CFG.demo) done(CFG.textos.yaH, CFG.textos.yaP.replace('{nombre}', prev.nombre.split(' ')[0]));
+  if (prev && prev.nombre && !CFG.demo) done(CFG.textos.yaH, CFG.textos.yaP.replace('{nombre}', prev.nombre.length <= 24 ? prev.nombre : prev.nombre.split(' ')[0]));
 } catch (e) {}
 const wa = $('#waDuda');
 if (wa) { if (CFG.whatsapp) wa.href = 'https://api.whatsapp.com/send?phone=' + CFG.whatsapp + '&text=' + encodeURIComponent(CFG.textos.waDuda); else wa.addEventListener('click', e => { e.preventDefault(); toast(CFG.textos.waDemo); }); }
